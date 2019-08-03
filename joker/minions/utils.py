@@ -2,20 +2,23 @@
 # coding: utf-8
 
 import sys
+import traceback
+
+_recvsize = 2 ** 24
 
 
-def _receive_lines(sock):
+def _receive_lines(sock, size=_recvsize):
     while True:
-        lines = sock.recv(2 ** 24).splitlines(keepends=True)
+        lines = sock.recv(size).splitlines(keepends=True)
         if not lines:
             break
         for line in lines:
             yield line
 
 
-def receive_lines(sock):
+def receive_lines(sock, size=_recvsize):
     partial_line = b''
-    for line in _receive_lines(sock):
+    for line in _receive_lines(sock, size):
         if line.endswith(b'\n'):
             yield partial_line + line
             partial_line = b''
@@ -29,11 +32,30 @@ def split(binstr):
     parts = binstr.strip().split(maxsplit=1)
     if len(parts) == 2:
         return parts
-    return b''.join(parts), None
+    return b''.join(parts), b''
+
+
+def asbytes(x):
+    x = x or b''
+    return x if isinstance(x, bytes) else str(x).encode('utf-8')
 
 
 def printerr(e):
     print(e.__class__.__name__, e, file=sys.stderr)
+
+
+def netcat(host, port, content, size=_recvsize):
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.connect((host, port))
+        sock.sendall(content)
+        sock.shutdown(socket.SHUT_WR)
+        return sock.recv(size)
+    except Exception:
+        traceback.print_exc()
+    finally:
+        sock.close()
 
 
 def runserver(func, host, port):
@@ -47,9 +69,22 @@ def runserver(func, host, port):
         gevent.spawn(func, sock)
 
 
+def binstr_conv(key, val):
+    try:
+        return getattr(bytes, key.decode(), bytes)(val)
+    except (UnicodeDecodeError, TypeError):
+        return val
+
+
 class ServerBase(object):
+    recvsize = _recvsize
+
+    def lookup(self, key, val):
+        return binstr_conv(key, val)
+
     def query(self, line):
-        raise NotImplementedError
+        key, val = split(line)
+        return asbytes(self.lookup(key, val))
 
     def runserver(self, host='0.0.0.0', port=8333):
         return runserver(self.serve_client, host, port)
@@ -57,29 +92,23 @@ class ServerBase(object):
     def serve_client(self, sock):
         import socket
         try:
-            req = sock.recv(2 ** 24)
+            req = sock.recv(self.recvsize)
             resp = self.query(req)
             sock.send(resp)
             sock.shutdown(socket.SHUT_WR)
         except Exception as e:
-            printerr(e)
+            traceback.print_exc()
         finally:
             sock.close()
 
 
-class PipedServerBase(object):
-    def query(self, line):
-        raise NotImplementedError
-
-    def runserver(self, host='0.0.0.0', port=8333):
-        return runserver(self.serve_client, host, port)
-
+class PipedServerBase(ServerBase):
     def respond(self, sock, ql):
         try:
             resp = self.query(ql) + b'\n'
             sock.send(resp)
         except Exception as e:
-            printerr(e)
+            traceback.print_exc()
 
     def serve_client(self, sock):
         with sock:

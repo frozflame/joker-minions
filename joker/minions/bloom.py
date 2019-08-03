@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import threading
+
 import mmh3
 from bitarray import bitarray
 
 from joker.minions import utils
+
+
+def _bitarray_get(bitarr, idx):
+    try:
+        return bitarr[idx]
+    except IndexError:
+        return False
 
 
 class BloomFilter(object):
@@ -17,28 +26,38 @@ class BloomFilter(object):
     def _compute_hash(self, item):
         return mmh3.hash(item, self.seed) % self.size
 
-    def __setitem__(self, key, value):
-        idx = self._compute_hash(key)
-        self.bitarr[idx] = bool(value)
-
-    def __getitem__(self, key):
+    def get(self, key):
         idx = self._compute_hash(key)
         return self.bitarr[idx]
 
+    def getset(self, key, value):
+        idx = self._compute_hash(key)
+        rv = self.bitarr[idx]
+        self.bitarr[idx] = bool(value)
+        return rv
+
+    def toggle(self, key):
+        idx = self._compute_hash(key)
+        with threading.Lock():
+            rv = not bool(self.bitarr[idx])
+            self.bitarr[idx] = rv
+            return rv
+
 
 class BloomMixin(object):
+    val_toggle = b'~'
+
     def __init__(self, size, seed=3):
         self.bloom = BloomFilter(size, seed)
 
-    def query(self, line):
-        cmd, key = utils.split(line)
-        cmd = cmd.lower()
-        if cmd == b'get':
-            return self.bloom[key]
-        if cmd == b'set':
-            self.bloom[key] = True
-        if cmd == b'del':
-            self.bloom[key] = False
+    def lookup(self, key, val):
+        if not val:
+            rv = self.bloom.get(key)
+        elif val == self.val_toggle:
+            rv = self.bloom.toggle(key)
+        else:
+            rv = self.bloom.getset(key, int(val.decode()))
+        return b'01'[int(rv)]
 
 
 class BloomServer(BloomMixin, utils.ServerBase):
