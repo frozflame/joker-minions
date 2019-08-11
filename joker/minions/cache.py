@@ -112,6 +112,3 @@ class WarmConf(SizedDict):
         for k, v in data.items():
             self.data[k] = v
         self.evict()
-
-
-ActiveTab = WarmConf
