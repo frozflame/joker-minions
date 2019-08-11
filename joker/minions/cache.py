@@ -2,9 +2,10 @@
 # coding: utf-8
 
 import os
-from joker.minions import utils
 import threading
 from collections import OrderedDict
+
+from joker.minions import utils
 
 
 class CacheMixin(object):
@@ -63,13 +64,13 @@ class SizedDict(object):
             self.data.popitem(last=False)
 
 
-class ActiveTab(SizedDict):
+class WarmConf(SizedDict):
     cmt = b'#'
 
     def __init__(self, sizelimit, path):
         path = os.path.expanduser(path)
         data = self._parse(path)
-        super(ActiveTab, self).__init__(sizelimit, data)
+        super(WarmConf, self).__init__(sizelimit, data)
         self.mtime = self._getmtime(path)
         self.path = path
 
@@ -111,3 +112,6 @@ class ActiveTab(SizedDict):
         for k, v in data.items():
             self.data[k] = v
         self.evict()
+
+
+ActiveTab = WarmConf
