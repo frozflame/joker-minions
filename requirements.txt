@@ -2,3 +2,4 @@ gevent
 joker
 mmh3
 bitarray
+pyyaml

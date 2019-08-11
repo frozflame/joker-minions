@@ -45,6 +45,7 @@ def printerr(e):
 
 
 def netcat(host, port, content, size=_recvsize):
+    # https://stackoverflow.com/a/1909355/2925169
     import socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -78,9 +79,7 @@ def binstr_conv(key, val):
 
 class ServerBase(object):
     recvsize = _recvsize
-
-    def lookup(self, key, val):
-        return binstr_conv(key, val)
+    lookup = staticmethod(binstr_conv)
 
     def query(self, line):
         key, val = split(line)
