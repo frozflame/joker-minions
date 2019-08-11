@@ -11,7 +11,6 @@ from setuptools import setup, find_packages
 
 _nsp = 'joker'
 _pkg = 'minions'
-_desc = 'simple socket server using gevent'
 _names = [_nsp, _pkg]
 _names = [s for s in _names if s]
 
@@ -42,10 +41,10 @@ def version_find():
 config = {
     'name': '-'.join(_names),
     'version': version_find(),
-    'description': '' + _desc,
-    'keywords': '',
+    'description': 'simple socket server using gevent',
+    'keywords': 'socket server cache bloom-filter',
     'url': 'https://github.com/frozflame/joker-minions',
-    'author': 'anonym',
+    'author': 'frozflame',
     'author_email': 'frozflame@outlook.com',
     'license': "GNU General Public License (GPL)",
     'packages': find_packages(exclude=['test_*']),
@@ -61,13 +60,11 @@ config = {
     ],
     # ensure copy static file to runtime directory
     'include_package_data': True,
-    # 'long_description': read('README.md'),
-    # 'long_description_content_type': "text/markdown",
+    'long_description': read('README.md'),
+    'long_description_content_type': "text/markdown",
 }
 
 if _nsp:
     config['namespace_packages'] = [_nsp]
 
-
 setup(**config)
-
