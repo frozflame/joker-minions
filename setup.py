@@ -41,7 +41,7 @@ def version_find():
 config = {
     'name': '-'.join(_names),
     'version': version_find(),
-    'description': 'simple socket server using gevent',
+    'description': 'simple cache server using gevent',
     'keywords': 'socket server cache bloom-filter',
     'url': 'https://github.com/frozflame/joker-minions',
     'author': 'frozflame',
