@@ -67,7 +67,7 @@ class SizedDict(object):
 
 
 class WarmConf(SizedDict):
-    cmt = b'#'
+    comment = b'#'
 
     def __init__(self, sizelimit, path):
         path = os.path.expanduser(path)
@@ -89,7 +89,7 @@ class WarmConf(SizedDict):
         with open(path, 'rb') as fin:
             for line in fin:
                 line = line.strip()
-                if not line or line.startswith(cls.cmt):
+                if not line or line.startswith(cls.comment):
                     continue
                 parts = line.split(maxsplit=1)
                 if len(parts) != 2:

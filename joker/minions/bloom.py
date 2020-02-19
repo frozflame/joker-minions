@@ -45,8 +45,6 @@ class BloomFilter(object):
 
 
 class BloomMixin(object):
-    val_toggle = b'~'
-
     def __init__(self, size, seed=3):
         self.bloom = BloomFilter(size, seed)
 
