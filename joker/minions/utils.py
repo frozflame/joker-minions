@@ -29,10 +29,11 @@ def receive_lines(sock, size=_recvsize):
 
 
 def split(binstr):
-    parts = binstr.strip().split(maxsplit=1)
+    binstr = binstr.strip()
+    parts = binstr.split(maxsplit=1)
     if len(parts) == 2:
         return parts
-    return b''.join(parts), b''
+    return binstr, b''
 
 
 def asbytes(x):
@@ -70,20 +71,13 @@ def runserver(func, host, port):
         gevent.spawn(func, sock)
 
 
-def binstr_conv(key, val):
-    try:
-        return getattr(bytes, key.decode(), bytes)(val)
-    except (UnicodeDecodeError, TypeError):
-        return val
-
-
 class ServerBase(object):
     recvsize = _recvsize
-    lookup = staticmethod(binstr_conv)
+    execute = staticmethod(lambda verb, data: b'')
 
-    def query(self, line):
-        key, val = split(line)
-        return asbytes(self.lookup(key, val))
+    def handle(self, line):
+        verb, payload = split(line)
+        return asbytes(self.execute(verb, payload))
 
     def runserver(self, host='0.0.0.0', port=8333):
         return runserver(self.serve_client, host, port)
@@ -92,10 +86,10 @@ class ServerBase(object):
         import socket
         try:
             req = sock.recv(self.recvsize)
-            resp = self.query(req)
+            resp = self.handle(req)
             sock.send(resp)
             sock.shutdown(socket.SHUT_WR)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
         finally:
             sock.close()
@@ -104,9 +98,9 @@ class ServerBase(object):
 class PipedServerBase(ServerBase):
     def respond(self, sock, ql):
         try:
-            resp = self.query(ql) + b'\n'
+            resp = self.handle(ql) + b'\n'
             sock.send(resp)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
 
     def serve_client(self, sock):

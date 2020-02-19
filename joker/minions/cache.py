@@ -9,19 +9,21 @@ from joker.minions import utils
 
 
 class CacheMixin(object):
-    val_pop = b'#'
-    val_none = b''
-
     def __init__(self, data=None):
         self.data = {} if data is None else data
 
-    def lookup(self, key, val):
-        if val == self.val_pop:
-            return self.data.pop(key, self.val_none)
-        rv = self.data.get(key, self.val_none)
-        if val:
+    def execute(self, verb, payload):
+        key = payload
+        if verb == b'get':
+            return self.data.get(key, b'')
+        if verb == b'set':
+            key, val = utils.split(payload)
             self.data[key] = val
-        return rv
+        if verb == b'pop':
+            return self.data.pop(key, b'')
+        if verb == b'del':
+            del self.data[key]
+        return b''
 
 
 class CacheServer(CacheMixin, utils.ServerBase):

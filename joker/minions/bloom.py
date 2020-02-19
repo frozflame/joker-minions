@@ -50,14 +50,20 @@ class BloomMixin(object):
     def __init__(self, size, seed=3):
         self.bloom = BloomFilter(size, seed)
 
-    def lookup(self, key, val):
-        if not val:
-            rv = self.bloom.get(key)
-        elif val == self.val_toggle:
-            rv = self.bloom.toggle(key)
-        else:
-            rv = self.bloom.getset(key, int(val.decode()))
+    def execute(self, verb, payload):
+        rv = self._execute(verb, payload)
         return b'01'[int(rv)]
+
+    def _execute(self, verb, key):
+        if verb == b'get':
+            return self.bloom.get(verb)
+        elif verb == b'set':
+            return self.bloom.getset(key, True)
+        elif verb == b'toggle':
+            return self.bloom.toggle(verb)
+        elif verb in (b'del', b'pop'):
+            return self.bloom.getset(key, False)
+        return 0
 
 
 class BloomServer(BloomMixin, utils.ServerBase):
