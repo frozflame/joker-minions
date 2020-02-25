@@ -71,7 +71,7 @@ class WarmConf(SizedDict):
 
     def __init__(self, sizelimit, path):
         path = os.path.expanduser(path)
-        data = self._parse(path)
+        data = self.parse(path)
         super(WarmConf, self).__init__(sizelimit, data)
         self.mtime = self._getmtime(path)
         self.path = path
@@ -84,7 +84,7 @@ class WarmConf(SizedDict):
         return int(os.path.getmtime(path) * 1000)
 
     @classmethod
-    def _parse(cls, path):
+    def parse(cls, path):
         data = OrderedDict()
         with open(path, 'rb') as fin:
             for line in fin:
@@ -95,7 +95,6 @@ class WarmConf(SizedDict):
                 if len(parts) != 2:
                     continue
                 k, v = parts
-                v = os.path.expanduser(v)
                 data[k] = v
         return data
 
@@ -103,14 +102,14 @@ class WarmConf(SizedDict):
         mtime = self._getmtime(self.path)
         if mtime == self.mtime:
             return
-        self.data = self._parse(self.path)
+        self.data = self.parse(self.path)
         self.evict()
 
     def update(self):
         mtime = self._getmtime(self.path)
         if mtime == self.mtime:
             return
-        data = self._parse(self.path)
+        data = self.parse(self.path)
         for k, v in data.items():
             self.data[k] = v
         self.evict()

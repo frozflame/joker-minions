@@ -6,6 +6,8 @@ Simple cache server using gevent.
 Run a cache server:
 
     $ python3 -c "from joker.minions.cache import CacheServer; CacheServer().runserver()"
+    
+The default port number is 8333.
 
 Play with `netcat`:
     
