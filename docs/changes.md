@@ -1,6 +1,9 @@
 Changes of `joker.minions`
 --------------------------
 
+### 0.2
+* remove cache.{SizedDict,WarmConf} -- moved to joker.xopen 
+
 ### 0.1.2
 * WarmConf._parse => WarmConf.parse, and do NOT expanduser(v)
 
